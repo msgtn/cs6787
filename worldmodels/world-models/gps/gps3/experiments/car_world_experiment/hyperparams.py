@@ -22,8 +22,8 @@ from gps.algorithm.policy.lin_gauss_init import init_lqr
 from gps.gui.config import generate_experiment_info
 from gps.proto.gps_pb2 import RGB_IMAGE, RGB_IMAGE_SIZE, ACTION, IMAGE_FEAT
 
-IMAGE_WIDTH = 96
-IMAGE_HEIGHT = 96
+IMAGE_WIDTH = 6
+IMAGE_HEIGHT = 6
 IMAGE_CHANNELS = 3
 NUM_FP = 15
 
@@ -54,12 +54,12 @@ agent = {
     'world' : CarWorld,
     'target_state' : None,
     'render' : True,
-    'x0': np.zeros([IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_CHANNELS]),
+    'x0': np.zeros(IMAGE_WIDTH*IMAGE_HEIGHT*IMAGE_CHANNELS),
     # 'rk': 0,
     'dt': 0.01,
     'substeps': 1,
     'conditions': common['conditions'],
-    'T': 1000,
+    'T': 10,
     'sensor_dims': SENSOR_DIMS,
     'state_include': [RGB_IMAGE],
     'obs_include': [],

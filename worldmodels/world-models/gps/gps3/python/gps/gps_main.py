@@ -196,7 +196,7 @@ class GPSMain(object):
                     redo = False
         else:
             self.agent.sample(
-                pol, cond,
+                pol, cond, itr,
                 verbose=(i < self._hyperparams['verbose_trials'])
             )
 

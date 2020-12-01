@@ -10,9 +10,9 @@ from gps.algorithm.cost.cost import Cost
 class CostCarWorld(Cost):
     """ Computes torque penalties. """
     def __init__(self, hyperparams):
-        config = copy.deepcopy(COST_ACTION)
-        config.update(hyperparams)
-        Cost.__init__(self, config)
+        # config = copy.deepcopy()
+        # config.update(hyperparams)
+        Cost.__init__(self, None)
 
     def eval(self, sample):
         """

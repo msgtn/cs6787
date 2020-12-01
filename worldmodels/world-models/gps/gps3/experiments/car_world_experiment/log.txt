@@ -1,0 +1,30 @@
+
+
+exp_name:   car_world_experiment_12-01-20_16-41
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostCarWorld)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   car_world_experiment_12-01-20_16-44
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostCarWorld)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   car_world_experiment_12-01-20_16-50
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostCarWorld)
+iterations: 10
+conditions: 1
+samples:    5
+
