@@ -1,0 +1,135 @@
+
+
+exp_name:   box2d_pointmass_example_10-25-20_23-38
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   box2d_pointmass_example_10-25-20_23-38
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   box2d_pointmass_example_10-25-20_23-39
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
+box2d_pointmass_example_10-25-20_23-39
+    |          |          condition 0      
+itr | avg_cost |   cost     step   entropy 
+  0 | 13795.45 | 13795.45     0.20   321.89
+
+
+exp_name:   box2d_pointmass_example_10-25-20_23-39
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   box2d_pointmass_example_12-01-20_14-16
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   box2d_pointmass_example_12-01-20_14-17
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   box2d_pointmass_example_12-01-20_14-17
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   box2d_pointmass_example_12-01-20_14-17
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
+box2d_pointmass_example_12-01-20_14-17
+    |          |          condition 0      
+itr | avg_cost |   cost     step   entropy 
+  0 | 13795.45 | 13795.45     0.20   321.89
+
+
+exp_name:   box2d_pointmass_example_12-01-20_14-18
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   box2d_pointmass_example_12-01-20_14-21
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
+box2d_pointmass_example_12-01-20_14-21
+    |          |          condition 0      
+itr | avg_cost |   cost     step   entropy 
+  0 | 13795.45 | 13795.45     0.20   321.89
+
+
+exp_name:   box2d_pointmass_example_12-01-20_14-23
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
+box2d_pointmass_example_12-01-20_14-23
+    |          |          condition 0      
+itr | avg_cost |   cost     step   entropy 
+  0 | 13795.45 | 13795.45     0.20   321.89
+  1 |  7589.42 |  7589.42     1.00   320.94
+  2 |  2142.37 |  2142.37     2.00   316.38
+  3 |   737.00 |   737.00     2.00   304.09
+  4 |   470.29 |   470.29     2.00   287.99
+  5 |   411.59 |   411.59     2.00   257.18
+  6 |   398.46 |   398.46     2.00   161.53
+  7 |   410.49 |   410.49     0.79   150.41
+  8 |   399.27 |   399.27     2.00   131.85
+  9 |   403.28 |   403.28     0.52    56.22

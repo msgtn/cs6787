@@ -1,0 +1,40 @@
+
+
+exp_name:   box2d_arm_example_12-01-20_14-26
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   box2d_arm_example_12-01-20_14-26
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   box2d_arm_example_12-01-20_14-52
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   box2d_arm_example_12-01-20_14-53
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
