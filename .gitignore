@@ -1,0 +1,5 @@
+*datasets
+*training_logs
+*.png
+*.npy
+*.npz
