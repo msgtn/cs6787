@@ -51,7 +51,7 @@ class CarWorld:
 
     def reset_world(self):
         """Returns the world to its intial state"""
-        self.env.destroy()
+        self.env.close()
         self.env.reset()
 
     def get_state(self):
