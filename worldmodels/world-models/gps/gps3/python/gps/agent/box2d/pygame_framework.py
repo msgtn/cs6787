@@ -24,7 +24,7 @@ This file contains the Framework for the Box2D GUI
 
 import Box2D as b2
 import pygame
-import gps.agent.box2d.framework as framework
+import framework
 
 
 GUIEnabled = False
@@ -284,4 +284,3 @@ class PygameFramework(framework.FrameworkBase):
         """
         self.screen.blit(self.font.render(s, True, color), (5, self.textLine))
         self.textLine += 15
-

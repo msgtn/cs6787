@@ -10,31 +10,35 @@ import numpy as np
 
 from gps import __file__ as gps_filepath
 from gps.agent.box2d.agent_box2d import AgentBox2D
-from gps.agent.box2d.arm_world import ArmWorld
+from gps.agent.box2d.car_world import CarWorld
 from gps.algorithm.algorithm_traj_opt import AlgorithmTrajOpt
-from gps.algorithm.cost.cost_state import CostState
-from gps.algorithm.cost.cost_action import CostAction
+# from gps.algorithm.cost.cost_state import CostState
+from gps.algorithm.cost.cost_car_world import CostCarWorld
 from gps.algorithm.cost.cost_sum import CostSum
 from gps.algorithm.dynamics.dynamics_lr_prior import DynamicsLRPrior
 from gps.algorithm.dynamics.dynamics_prior_gmm import DynamicsPriorGMM
 from gps.algorithm.traj_opt.traj_opt_lqr_python import TrajOptLQRPython
 from gps.algorithm.policy.lin_gauss_init import init_lqr
 from gps.gui.config import generate_experiment_info
-from gps.proto.gps_pb2 import JOINT_ANGLES, JOINT_VELOCITIES, END_EFFECTOR_POINTS, ACTION
+from gps.proto.gps_pb2 import RGB_IMAGE, RGB_IMAGE_SIZE, ACTION, IMAGE_FEAT
+
+IMAGE_WIDTH = 96
+IMAGE_HEIGHT = 96
+IMAGE_CHANNELS = 3
+NUM_FP = 15
 
 SENSOR_DIMS = {
-    JOINT_ANGLES: 2,
-    JOINT_VELOCITIES: 2,
-    END_EFFECTOR_POINTS: 3,
-    ACTION: 2
+    ACTION: 3,
+    RGB_IMAGE: IMAGE_WIDTH*IMAGE_HEIGHT*IMAGE_CHANNELS,
+    RGB_IMAGE_SIZE: 3,
+    IMAGE_FEAT: NUM_FP * 2,  # affected by num_filters set below.
 }
-
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
-EXP_DIR = BASE_DIR + '/../experiments/box2d_arm_example/'
+EXP_DIR = BASE_DIR + '/../experiments/car_world_experiment/'
 
 
 common = {
-    'experiment_name': 'box2d_arm_example' + '_' + \
+    'experiment_name': 'car_world_experiment' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
@@ -47,19 +51,17 @@ if not os.path.exists(common['data_files_dir']):
 
 agent = {
     'type': AgentBox2D,
-    'target_state' : np.array([0, 0]),
-    'world' : ArmWorld,
+    'world' : CarWorld,
+    'target_state' : None,
     'render' : True,
-    'x0': np.array([0.75*np.pi, 0.5*np.pi, 0, 0, 0, 0, 0]),
-    'rk': 0,
-    'dt': 0.05,
+    'x0': np.zeros([IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_CHANNELS]),
+    # 'rk': 0,
+    'dt': 0.01,
     'substeps': 1,
     'conditions': common['conditions'],
-    'pos_body_idx': np.array([]),
-    'pos_body_offset': np.array([]),
-    'T': 100,
+    'T': 1000,
     'sensor_dims': SENSOR_DIMS,
-    'state_include': [JOINT_ANGLES, JOINT_VELOCITIES, END_EFFECTOR_POINTS],
+    'state_include': [RGB_IMAGE],
     'obs_include': [],
 }
 
@@ -78,25 +80,16 @@ algorithm['init_traj_distr'] = {
     'T': agent['T'],
 }
 
-action_cost = {
-    'type': CostAction,
+cost_car_world = {
+    'type': CostCarWorld,
     'wu': np.array([1, 1])
 }
 
-state_cost = {
-    'type': CostState,
-    'data_types' : {
-        JOINT_ANGLES: {
-            'wp': np.array([1, 1]),
-            'target_state': agent["target_state"],
-        },
-    },
-}
 
 algorithm['cost'] = {
     'type': CostSum,
-    'costs': [action_cost, state_cost],
-    'weights': [1e-5, 1.0],
+    'costs': [cost_car_world],
+    'weights': [1.0],
 }
 
 algorithm['dynamics'] = {
@@ -122,7 +115,7 @@ config = {
     'verbose_trials': 5,
     'common': common,
     'agent': agent,
-    'gui_on': True,
+    'gui_on': False,
     'algorithm': algorithm,
 }
 

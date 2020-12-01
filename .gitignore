@@ -3,3 +3,5 @@
 *.png
 *.npy
 *.npz
+*.pyc
+monitor-folder
