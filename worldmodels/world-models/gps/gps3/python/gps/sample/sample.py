@@ -41,7 +41,10 @@ class Sample(object):
                 self._data[sensor_name] = \
                         np.empty((self.T,) + sensor_data.shape)
                 self._data[sensor_name].fill(np.nan)
-            self._data[sensor_name][t, :] = sensor_data
+            try:
+                self._data[sensor_name][t, :] = sensor_data
+            except:
+                import pdb; pdb.set_trace()
             self._X[t, :].fill(np.nan)
             self._obs[t, :].fill(np.nan)
 

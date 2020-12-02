@@ -2,6 +2,8 @@
 import Box2D as b2
 import numpy as np
 import sys
+from skimage.transform import resize
+from skimage import color
 # sys.path.append('/home/dev/scratch/worldmodels/world-models/gps/gps/python/gps/agent/box2d')
 # from .framework import Framework
 from gps.agent.box2d.settings import fwSettings
@@ -17,7 +19,7 @@ class CarWorld:
         self.env = wrappers.Monitor(self.env, 'monitor-folder', force=True)
         self.render = render # bool
         self.world = self.env.world #b2.b2World(gravity=(0, -10), doSleep=True)
-
+        self.last_reward = 0
         # self.world.gravity = (0.0, 0.0)
 
         self.x0 = self.env.reset()
@@ -34,7 +36,7 @@ class CarWorld:
 
     def run_next(self, action):
         """Moves forward in time one step. Calls the renderer if applicable."""
-        state, self.reward, done, info = self.env.step(action)
+        state, self.last_reward, done, info = self.env.step(action)
         if self.render:
             # super(CarWorld, self).run_next(action)
             self.env.render()
@@ -61,8 +63,10 @@ class CarWorld:
         #          JOINT_VELOCITIES: np.array([self.joint1.speed,
         #                                      self.joint2.speed]),
         #          END_EFFECTOR_POINTS: np.append(np.array(self.body2.position),[0])}
-
-        state = {RGB_IMAGE: self.env.render("state_pixels")}
-
-        return state
+        try:
+            state = resize(color.rgb2gray(self.env.render("state_pixels")), (8, 4)).flatten()
+        except:
+            import pdb; pdb.set_trace()
+        packed_state = {RGB_IMAGE: state, "REWARD": np.expand_dims(-self.last_reward,axis=0)}
+        return packed_state
 

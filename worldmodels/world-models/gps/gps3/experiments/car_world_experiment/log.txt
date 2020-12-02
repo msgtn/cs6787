@@ -28,3 +28,13 @@ iterations: 10
 conditions: 1
 samples:    5
 
+
+
+exp_name:   car_world_experiment_12-02-20_15-18
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostCarWorld)
+iterations: 10
+conditions: 1
+samples:    5
+

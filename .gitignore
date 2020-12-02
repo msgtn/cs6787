@@ -4,4 +4,6 @@
 *.npy
 *.npz
 *.pyc
+*.txt
+*.pkl
 monitor-folder
