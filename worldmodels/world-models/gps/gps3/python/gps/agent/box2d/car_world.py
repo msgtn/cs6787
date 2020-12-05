@@ -56,6 +56,10 @@ class CarWorld:
         self.env.close()
         self.env.reset()
 
+    def resize(self, obs):
+        return resize(color.rgb2gray(obs), (8, 4)).flatten()
+
+
     def get_state(self):
         """Retrieves the state of the point mass"""
         # state = {JOINT_ANGLES: np.array([self.joint1.angle,
@@ -64,7 +68,7 @@ class CarWorld:
         #                                      self.joint2.speed]),
         #          END_EFFECTOR_POINTS: np.append(np.array(self.body2.position),[0])}
         try:
-            state = resize(color.rgb2gray(self.env.render("state_pixels")), (8, 4)).flatten()
+                state = self.resize(self.env.render("state_pixels"))
         except:
             import pdb; pdb.set_trace()
         packed_state = {RGB_IMAGE: state, "REWARD": np.expand_dims(-self.last_reward,axis=0)}
