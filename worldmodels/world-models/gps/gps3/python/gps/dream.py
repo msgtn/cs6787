@@ -1,4 +1,7 @@
-import sys; sys.path.append('/home/dev/scratch/gpscars/worldmodels/world-models/WorldModelsExperiments/carracing'); import dream_model
+import sys;
+sys.path.append('../../WorldModelsExperiments/carracing');
+sys.path.append('../../WorldModelsExperiments/carracing');
+import dream_model
 model = dream_model.Model()
 import numpy as np
 import time
