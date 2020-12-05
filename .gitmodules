@@ -1,0 +1,3 @@
+[submodule "worldmodels/world-models/WorldModelsExperiments"]
+	path = worldmodels/world-models/WorldModelsExperiments
+	url = https://github.com/hardmaru/WorldModelsExperiments
