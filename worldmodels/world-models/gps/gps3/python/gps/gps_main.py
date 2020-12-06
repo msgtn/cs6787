@@ -13,12 +13,48 @@ import argparse
 import threading
 import time
 import traceback
+import multiprocessing
+import pickle
+# from copy import deepcopy, copy
 
 # Add gps/python to path so that imports work.
 sys.path.append('/'.join(str.split(__file__, '/')[:-2]))
 from gps.gui.gps_training_gui import GPSTrainingGUI
 from gps.utility.data_logger import DataLogger
 from gps.sample.sample_list import SampleList
+
+def _take_sample(itr, cond, i, algorithm, agent, verbose_trials):
+    """
+    Collect a sample from the agent.
+    Args:
+        itr: Iteration number.
+        cond: Condition number.
+        i: Sample number.
+    Returns: None
+    """
+    if algorithm._hyperparams['sample_on_policy'] \
+            and algorithm.iteration_count > 0:
+        pol = algorithm.policy_opt.policy
+    else:
+        pol = algorithm.cur[cond].traj_distr
+    # agent = config['agent']['type'](config['agent'])
+    agent.sample(
+        pol, cond, itr,
+        verbose=(i < verbose_trials)
+    )
+    return agent._samples[cond]
+
+
+
+def run_local_controller(cond, num_samples, itr, algorithm_file, agent_config, verbose_trials):
+    with open(algorithm_file, 'rb') as infile:
+        algorithm = pickle.load(infile)
+    print('ji')
+    agent = agent_config['agent']['type'](agent_config['agent'])
+    samples = []
+    for i in range(num_samples):
+        samples.append(_take_sample(itr, cond, i, algorithm, agent, verbose_trials))
+    return samples
 
 
 class GPSMain(object):
@@ -30,6 +66,7 @@ class GPSMain(object):
             config: Hyperparameters for experiment
             quit_on_end: When true, quit automatically on completion
         """
+        self.config = config
         self._quit_on_end = quit_on_end
         self._hyperparams = config
         self._conditions = config['common']['conditions']
@@ -78,6 +115,42 @@ class GPSMain(object):
                 self._take_iteration(itr, traj_sample_lists)
                 pol_sample_lists = self._take_policy_samples()
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
+            '''
+            itr_start = self._initialize(itr_load)
+
+            # import pdb; pdb.set_trace
+
+            for itr in range(itr_start, self._hyperparams['iterations']):
+                jobs = self._train_idx
+                # for cond in self._train_idx:
+                # test = copy.copy(self.algorithm)
+                # test = deepcopy(self.agent)
+                # algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr
+                config = self.config
+                filenames = [f"temp{k}.pkl" for k,_ in enumerate(jobs)]
+                agents = [config['agent'] for _ in range(len(jobs))]
+                for f in filenames:
+                    with open(f, 'wb') as tempalgfile:
+                        pickle.dump(self.algorithm, tempalgfile)
+                localargs = [(cond, self._hyperparams['num_samples'], itr, filenames[j], agents[j], self._hyperparams['verbose_trials']) for j,cond in enumerate(jobs)]
+                # import pdb; pdb.set_trace()
+                with multiprocessing.Pool(processes = min(6,len(self._train_idx))) as pool:
+                    results = pool.starmap(run_local_controller, localargs)
+                # import pdb; pdb.set_trace()
+                self.agent._samples = results
+                traj_sample_lists = [
+                    self.agent.get_samples(cond, -self._hyperparams['num_samples'])
+                    for cond in self._train_idx
+                ]
+
+                # Clear agent samples.
+                self.agent.clear_samples()
+
+                self._take_iteration(itr, traj_sample_lists)
+                pol_sample_lists = self._take_policy_samples()
+                self._log_data(itr, traj_sample_lists, pol_sample_lists)
+                '''
+
         except Exception as e:
             traceback.print_exception(*sys.exc_info())
         finally:
@@ -128,6 +201,7 @@ class GPSMain(object):
                 self.gui.set_status_text('Press \'go\' to begin.')
             return 0
         else:
+            self.itr_load = itr_load
             algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr_load
             self.algorithm = self.data_logger.unpickle(algorithm_file)
             if self.algorithm is None:

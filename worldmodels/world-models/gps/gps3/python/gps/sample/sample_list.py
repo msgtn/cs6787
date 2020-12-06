@@ -1,5 +1,5 @@
 """ This file defines the sample list wrapper and sample writers. """
-import pickle
+import dill as pickle
 import logging
 
 import numpy as np

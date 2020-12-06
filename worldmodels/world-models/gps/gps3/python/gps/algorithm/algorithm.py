@@ -229,6 +229,11 @@ class Algorithm(object):
     # For pickling.
     def __getstate__(self):
         state = self.__dict__.copy()
+        # print(state.keys())
+        # keys = list(state.keys())
+        # del keys[-3]
+        # for k in keys:
+        #     del state[k]
         state['_random_state'] = random.getstate()
         state['_np_random_state'] = np.random.get_state()
         return state

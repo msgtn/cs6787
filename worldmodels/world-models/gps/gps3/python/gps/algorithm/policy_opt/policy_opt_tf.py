@@ -23,13 +23,14 @@ LOGGER = logging.getLogger(__name__)
 class PolicyOptTf(PolicyOpt):
     """ Policy optimization using tensor flow for DAG computations/nonlinear function approximation. """
     def __init__(self, hyperparams, dO, dU):
+        print("initing")
         config = copy.deepcopy(POLICY_OPT_TF)
         config.update(hyperparams)
 
         PolicyOpt.__init__(self, config, dO, dU)
 
         tf.set_random_seed(self._hyperparams['random_seed'])
-
+        print("seeded")
         self.tf_iter = 0
         self.batch_size = self._hyperparams['batch_size']
         self.device_string = "/cpu:0"
@@ -62,7 +63,9 @@ class PolicyOptTf(PolicyOpt):
                 self.x_idx = self.x_idx + list(range(i, i+dim))
             i += dim
         init_op = tf.initialize_all_variables()
+        print("running initop")
         self.sess.run(init_op)
+        print("run")
 
     def init_network(self):
         """ Helper method to initialize the tf networks used """
@@ -92,7 +95,7 @@ class PolicyOptTf(PolicyOpt):
                                weight_decay=self._hyperparams['weight_decay'],
                                fc_vars=self.fc_vars,
                                last_conv_vars=self.last_conv_vars)
-        self.saver = tf.train.Saver()
+        self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V1)
 
     def update(self, obs, tgt_mu, tgt_prc, tgt_wt):
         """
@@ -243,6 +246,7 @@ class PolicyOptTf(PolicyOpt):
 
     def save_model(self, fname):
         LOGGER.debug('Saving model to: %s', fname)
+        # import pdb; pdb.set_trace()
         self.saver.save(self.sess, fname, write_meta_graph=False)
 
     def restore_model(self, fname):
@@ -253,9 +257,12 @@ class PolicyOptTf(PolicyOpt):
     def __getstate__(self):
         with tempfile.NamedTemporaryFile('w+b', delete=True) as f:
             self.save_model(f.name) # TODO - is this implemented.
+            # import pdb; pdb.set_trace()
             f.seek(0)
-            with open(f.name, 'r') as f2:
+            with open(f.name, 'rb') as f2:
                 wts = f2.read()
+        # print(f'WTS:{wts}')
+        # import pdb; pdb.set_trace()
         return {
             'hyperparams': self._hyperparams,
             'dO': self._dO,
@@ -272,15 +279,23 @@ class PolicyOptTf(PolicyOpt):
     def __setstate__(self, state):
         from tensorflow.python.framework import ops
         ops.reset_default_graph()  # we need to destroy the default graph before re_init or checkpoint won't restore.
+        print("before the restorea")
         self.__init__(state['hyperparams'], state['dO'], state['dU'])
+        print("initied")
         self.policy.scale = state['scale']
         self.policy.bias = state['bias']
         self.policy.x_idx = state['x_idx']
         self.policy.chol_pol_covar = state['chol_pol_covar']
         self.tf_iter = state['tf_iter']
-
-        with tempfile.NamedTemporaryFile('w+b', delete=True) as f:
-            f.write(state['wts'])
-            f.seek(0)
-            self.restore_model(f.name)
+        print("creating tempfile")
+        try:
+            with tempfile.NamedTemporaryFile('w+b', delete=True) as f:
+                print("before the write")
+                f.write(state['wts'])
+                f.seek(0)
+                print("before the restore")
+                self.restore_model(f.name)
+        except Exception as e:
+            print(e)
+            import pdb; pdb.set_trace()
 
