@@ -43,7 +43,6 @@ class AlgorithmBADMM(Algorithm):
         """
         for m in range(self.M):
             self.cur[m].sample_list = sample_lists[m]
-
         self._set_interp_values()
         self._update_dynamics()  # Update dynamics model using all sample.
         self._update_step_size()  # KL Divergence step size.

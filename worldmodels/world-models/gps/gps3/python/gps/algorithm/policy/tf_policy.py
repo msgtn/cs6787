@@ -111,25 +111,34 @@ class TfPolicy(Policy):
         a checkpointed policy.
         """
         from tensorflow.python.framework import ops
+        
         ops.reset_default_graph()  # we need to destroy the default graph before re_init or checkpoint won't restore.
+        print('loading the pickle')
         pol_dict = pickle.load(open(policy_dict_path, "rb"))
+        print("creating the map")
+        
         tf_map = tf_generator(dim_input=pol_dict['deg_obs'], dim_output=pol_dict['deg_action'],
                               batch_size=1, network_config=network_config)
-
+        print("starting the session")
         sess = tf.Session()
         init_op = tf.initialize_all_variables()
+        print('about to run init_op')
+        print(init_op)
         sess.run(init_op)
+        print('creating a saver')
         saver = tf.train.Saver()
         check_file = pol_dict['checkpoint_path_tf']
+        print('about to restore')
         saver.restore(sess, check_file)
-
         device_string = pol_dict['device_string']
-
-        cls_init = cls(pol_dict['deg_action'], tf_map.get_input_tensor(), tf_map.get_output_op(), np.zeros((1,)),
+        print('creating the class')
+        #dU, obs_tensor, act_op, feat_op, var, sess, device_string, copy_param_scope=None
+        cls_init = cls(pol_dict['deg_action'], tf_map.get_input_tensor(), tf_map.get_output_op(), tf_map.get_feature_op(), np.zeros((1,)),
                        sess, device_string)
         cls_init.chol_pol_covar = pol_dict['chol_pol_covar']
         cls_init.scale = pol_dict['scale']
         cls_init.bias = pol_dict['bias']
         cls_init.x_idx = pol_dict['x_idx']
+        print('load_policy returning')
         return cls_init
 

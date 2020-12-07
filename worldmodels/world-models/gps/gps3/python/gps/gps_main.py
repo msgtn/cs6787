@@ -22,8 +22,8 @@ sys.path.append('/'.join(str.split(__file__, '/')[:-2]))
 from gps.gui.gps_training_gui import GPSTrainingGUI
 from gps.utility.data_logger import DataLogger
 from gps.sample.sample_list import SampleList
-
-def _take_sample(itr, cond, i, algorithm, agent, verbose_trials):
+from gps.proto.gps_pb2 import RGB_IMAGE, RGB_IMAGE_SIZE, ACTION, IMAGE_FEAT
+def _take_sample(itr, cond, i, pol, agent, verbose_trials):
     """
     Collect a sample from the agent.
     Args:
@@ -32,11 +32,11 @@ def _take_sample(itr, cond, i, algorithm, agent, verbose_trials):
         i: Sample number.
     Returns: None
     """
-    if algorithm._hyperparams['sample_on_policy'] \
-            and algorithm.iteration_count > 0:
-        pol = algorithm.policy_opt.policy
-    else:
-        pol = algorithm.cur[cond].traj_distr
+    # if algorithm._hyperparams['sample_on_policy'] \
+    #         and algorithm.iteration_count > 0:
+    #     pol = algorithm.policy_opt.policy
+    # else:
+    #     pol = algorithm.cur[cond].traj_distr
     # agent = config['agent']['type'](config['agent'])
     agent.sample(
         pol, cond, itr,
@@ -46,16 +46,54 @@ def _take_sample(itr, cond, i, algorithm, agent, verbose_trials):
 
 
 
-def run_local_controller(cond, num_samples, itr, algorithm_file, agent_config, verbose_trials):
-    with open(algorithm_file, 'rb') as infile:
-        algorithm = pickle.load(infile)
-    print('ji')
-    agent = agent_config['agent']['type'](agent_config['agent'])
-    samples = []
-    for i in range(num_samples):
-        samples.append(_take_sample(itr, cond, i, algorithm, agent, verbose_trials))
-    return samples
+# def run_local_controller(cond, num_samples, itr, algorithm_file, agent_config, policy_config, verbose_trials):
+#     from gps.algorithm.policy.tf_policy import TfPolicy
+#     # from gps.algorithm.policy_opt.config import POLICY_OPT_TF
+#     import tensorflow as tf
+#     # with open(algorithm_file, 'rb') as infile:
+#     #     # algorithm = pickle.load(infile)
+#     #     policy = pickle.load(infile)
+#     # print('ji')
+#     # sess = tf.Session()
+#     # policy = TFPolicy(dU, None, None, None, np.zeros(dU), sess, "/cpu:0", )
 
+
+#     # if self.algorithm._hyperparams['sample_on_policy'] \
+#     #             and self.algorithm.iteration_count > 0:
+#     #         pol = self.algorithm.policy_opt.policy
+#     #     else:
+#     #         pol = self.algorithm.cur[cond].traj_distr
+
+#     tf_map = lambda *args, **kwargs: policy_config['network_model'](**kwargs)[0]
+    
+#     print(tf_map)
+#     policy = TfPolicy.load_policy(algorithm_file, tf_map, network_config=dict())
+#     print("loaded policy")
+#     agent = agent_config['type'](agent_config)
+#     samples = []
+#     for i in range(num_samples):
+#         print("taking a sample")
+#         samples.append(_take_sample(itr, cond, i, policy, agent, verbose_trials))
+#     return samples
+
+def run_local_controller(cond, itr, config, algorithm_file):
+    import tensorflow as tf
+    num_samples = config['num_samples']
+    verbose_trials = config['verbose_trials']
+    agent = config['agent']['type'](config['agent'])
+    with open(algorithm_file, 'rb') as algfile:
+        algorithm = pickle.load(algfile)
+    if algorithm._hyperparams['sample_on_policy'] \
+            and algorithm.iteration_count > 0:
+        pol = algorithm.policy_opt.policy
+    else:
+        pol = algorithm.cur[cond].traj_distr
+    for i in range(num_samples):
+        agent.sample(
+            pol, cond, itr,
+            verbose=(i < verbose_trials)
+        )
+    return agent.get_samples(cond, -num_samples)
 
 class GPSMain(object):
     """ Main class to run algorithms and experiments. """
@@ -66,6 +104,7 @@ class GPSMain(object):
             config: Hyperparameters for experiment
             quit_on_end: When true, quit automatically on completion
         """
+        
         self.config = config
         self._quit_on_end = quit_on_end
         self._hyperparams = config
@@ -88,7 +127,7 @@ class GPSMain(object):
         config['algorithm']['agent'] = self.agent
         self.algorithm = config['algorithm']['type'](config['algorithm'])
 
-    def run(self, itr_load=None):
+    def run(self, itr_load=None, parallel=False):
         """
         Run training by iteratively sampling and taking an iteration.
         Args:
@@ -97,24 +136,55 @@ class GPSMain(object):
         Returns: None
         """
         try:
-            itr_start = self._initialize(itr_load)
+            if parallel==False:
+                itr_start = self._initialize(itr_load)
 
-            for itr in range(itr_start, self._hyperparams['iterations']):
-                for cond in self._train_idx:
-                    for i in range(self._hyperparams['num_samples']):
-                        self._take_sample(itr, cond, i)
+                for itr in range(itr_start, self._hyperparams['iterations']):
+                    for cond in self._train_idx:
+                        for i in range(self._hyperparams['num_samples']):
+                            self._take_sample(itr, cond, i)
 
-                traj_sample_lists = [
-                    self.agent.get_samples(cond, -self._hyperparams['num_samples'])
-                    for cond in self._train_idx
-                ]
+                    traj_sample_lists = [
+                        self.agent.get_samples(cond, -self._hyperparams['num_samples'])
+                        for cond in self._train_idx
+                    ]
 
-                # Clear agent samples.
-                self.agent.clear_samples()
+                    # Clear agent samples.
+                    self.agent.clear_samples()
 
-                self._take_iteration(itr, traj_sample_lists)
-                pol_sample_lists = self._take_policy_samples()
-                self._log_data(itr, traj_sample_lists, pol_sample_lists)
+                    self._take_iteration(itr, traj_sample_lists)
+                    pol_sample_lists = self._take_policy_samples()
+                    self._log_data(itr, traj_sample_lists, pol_sample_lists)
+            else:
+                itr_start = self._initialize(itr_load)
+                for itr in range(itr_start, self._hyperparams['iterations']):
+                    jobs = self._train_idx
+                    filenames = ["temp{k}.pkl" for k,_ in enumerate(jobs)]
+                    for f in filenames:
+                        with open(f, 'wb') as outfile:
+                            pickle.dump(self.algorithm, outfile)
+                    config = dict()
+                    config['agent'] = self._hyperparams['agent']
+                    config['num_samples'] = self._hyperparams['num_samples']
+                    config['verbose_trials'] = self._hyperparams['verbose_trials']
+                    localargs = [(cond,  itr, config, filenames[i]) for i,cond in enumerate(jobs)]
+                    # run_local_controller(*localargs[0])
+                    with multiprocessing.Pool(processes = min(6,len(self._train_idx))) as pool:
+                        results = pool.starmap(run_local_controller, localargs)
+                    
+                    # traj_sample_lists = [
+                    #     agent.get_samples(0, -self._hyperparams['num_samples'])
+                    #     for agent in results
+                    # ]
+                    traj_sample_lists = results
+                    for traj in traj_sample_lists:
+                        for sample in traj:
+                            sample.agent = self.agent # add the default agent so it's not none
+                    # Clear agent samples.
+                    self.agent.clear_samples()
+                    self._take_iteration(itr, traj_sample_lists)
+                    pol_sample_lists = self._take_policy_samples()
+                    self._log_data(itr, traj_sample_lists, pol_sample_lists)
             '''
             itr_start = self._initialize(itr_load)
 
@@ -127,13 +197,20 @@ class GPSMain(object):
                 # test = deepcopy(self.agent)
                 # algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr
                 config = self.config
-                filenames = [f"temp{k}.pkl" for k,_ in enumerate(jobs)]
+                filenames = [f"temp{k}" for k,_ in enumerate(jobs)]
+                
                 agents = [config['agent'] for _ in range(len(jobs))]
+                deg_obs = config['agent']['sensor_dims'][RGB_IMAGE]
+                deg_action = config['agent']['sensor_dims'][ACTION]
                 for f in filenames:
-                    with open(f, 'wb') as tempalgfile:
-                        pickle.dump(self.algorithm, tempalgfile)
-                localargs = [(cond, self._hyperparams['num_samples'], itr, filenames[j], agents[j], self._hyperparams['verbose_trials']) for j,cond in enumerate(jobs)]
-                # import pdb; pdb.set_trace()
+                    self.algorithm.policy_opt.policy.pickle_policy(deg_obs, deg_action, f, should_hash=False)
+                    # with open(f, 'wb') as tempalgfile:
+                    #     pickle.dump(self.algorithm.policy_opt.policy, tempalgfile)
+                policy_filenames = [f + '/_pol' for f in filenames]
+                
+                localargs = [(cond, self._hyperparams['num_samples'], itr, policy_filenames[j], agents[j], self._hyperparams['algorithm']['policy_opt'], self._hyperparams['verbose_trials']) for j,cond in enumerate(jobs)]
+                run_local_controller(*localargs[0])
+                import pdb; pdb.set_trace()
                 with multiprocessing.Pool(processes = min(6,len(self._train_idx))) as pool:
                     results = pool.starmap(run_local_controller, localargs)
                 # import pdb; pdb.set_trace()
@@ -369,6 +446,8 @@ def main():
                         help='silent debug print outs')
     parser.add_argument('-q', '--quit', action='store_true',
                         help='quit GUI automatically when finished')
+    parser.add_argument('-c', '--concurrent', action='store_true',
+                        help='run conditions concurrently')
     args = parser.parse_args()
 
     exp_name = args.experiment
@@ -385,7 +464,10 @@ def main():
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     else:
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
-
+    if args.concurrent:
+        concurrent = True
+    else:
+        concurrent = False
     if args.new:
         from shutil import copy
 
@@ -481,8 +563,9 @@ def main():
             plt.ioff()
             plt.show()
         else:
-            gps.run(itr_load=resume_training_itr)
+            gps.run(itr_load=resume_training_itr, parallel=concurrent)
 
 
 if __name__ == "__main__":
+    multiprocessing.set_start_method('spawn')
     main()

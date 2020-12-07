@@ -27,7 +27,6 @@ class DataLogger(object):
     def unpickle(self, filename):
         """ Unpickle data from file specified by filename. """
         try:
-            import pdb; pdb.set_trace()
             return pickle.load(open(filename, 'rb'))
         except IOError:
             LOGGER.debug('Unpickle error. Cannot find file: %s', filename)

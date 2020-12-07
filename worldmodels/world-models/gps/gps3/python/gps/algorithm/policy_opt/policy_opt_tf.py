@@ -23,14 +23,12 @@ LOGGER = logging.getLogger(__name__)
 class PolicyOptTf(PolicyOpt):
     """ Policy optimization using tensor flow for DAG computations/nonlinear function approximation. """
     def __init__(self, hyperparams, dO, dU):
-        print("initing")
         config = copy.deepcopy(POLICY_OPT_TF)
         config.update(hyperparams)
 
         PolicyOpt.__init__(self, config, dO, dU)
 
         tf.set_random_seed(self._hyperparams['random_seed'])
-        print("seeded")
         self.tf_iter = 0
         self.batch_size = self._hyperparams['batch_size']
         self.device_string = "/cpu:0"
@@ -63,9 +61,7 @@ class PolicyOptTf(PolicyOpt):
                 self.x_idx = self.x_idx + list(range(i, i+dim))
             i += dim
         init_op = tf.initialize_all_variables()
-        print("running initop")
         self.sess.run(init_op)
-        print("run")
 
     def init_network(self):
         """ Helper method to initialize the tf networks used """
