@@ -57,4 +57,3 @@ plt.savefig('/Users/PsychoMugs/projects/gpscar/worldmodels/world-models/gps/gps3
 plt.show()
 # import pdb; pdb.set_trace()
 
-
