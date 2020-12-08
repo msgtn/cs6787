@@ -53,7 +53,7 @@ SENSOR_DIMS = {
     IMAGE_FEAT: NUM_FP * 2,  # affected by num_filters set below.
 }
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
-EXP_DIR = BASE_DIR + '/../experiments/car_world_world_experiment/'
+EXP_DIR = BASE_DIR + '/../experiments/car_world_dream_experiment/'
 
 
 common = {
