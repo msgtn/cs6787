@@ -16,10 +16,11 @@ class CarWorld:
     name = "Car"
     def __init__(self, x0, _, render):
         self.env = gym.make('CarRacing-v0')
-        self.env = wrappers.Monitor(self.env, 'monitor-folder', force=True)
+        # self.env = wrappers.Monitor(self.env, 'monitor-folder', force=True)
         self.render = render # bool
         self.world = self.env.world #b2.b2World(gravity=(0, -10), doSleep=True)
         self.last_reward = 0
+        self.cum_reward = 0
         # self.world.gravity = (0.0, 0.0)
 
         self.x0 = self.env.reset()
@@ -37,6 +38,7 @@ class CarWorld:
     def run_next(self, action):
         """Moves forward in time one step. Calls the renderer if applicable."""
         state, self.last_reward, done, info = self.env.step(action)
+        self.cum_reward += self.last_reward
         if self.render:
             # super(CarWorld, self).run_next(action)
             self.env.render()

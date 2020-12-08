@@ -15,6 +15,8 @@ import time
 import traceback
 import multiprocessing
 import pickle
+import time
+import json
 # from copy import deepcopy, copy
 
 # Add gps/python to path so that imports work.
@@ -85,7 +87,7 @@ def run_local_controller(cond, itr, config, algorithm_file):
         algorithm = pickle.load(algfile)
     if algorithm._hyperparams['sample_on_policy'] \
             and algorithm.iteration_count > 0:
-        pol = algorithm.policy_opt.policy
+        pol = algorithm.policy_opt.policy # note that this is not currently working because self.scale is not set
     else:
         pol = algorithm.cur[cond].traj_distr
     for i in range(num_samples):
@@ -135,29 +137,42 @@ class GPSMain(object):
                 iteration, and resumes training at the next iteration.
         Returns: None
         """
+        timestamps = {
+            "start": time.time(),
+            "local_controller_times": [],
+            "iteration_times": [],
+            "end": None
+        }
         try:
-            if parallel==False:
+            if parallel == False:
                 itr_start = self._initialize(itr_load)
-
                 for itr in range(itr_start, self._hyperparams['iterations']):
+                    iteration_start = time.time()
+                    cond_start = time.time()
                     for cond in self._train_idx:
                         for i in range(self._hyperparams['num_samples']):
                             self._take_sample(itr, cond, i)
-
                     traj_sample_lists = [
                         self.agent.get_samples(cond, -self._hyperparams['num_samples'])
                         for cond in self._train_idx
                     ]
 
+                    cond_end = time.time()
+                    timestamps["local_controller_times"].append(cond_end-cond_start)
+                    print(f"Controller time: {cond_end-cond_start}")
                     # Clear agent samples.
                     self.agent.clear_samples()
 
                     self._take_iteration(itr, traj_sample_lists)
-                    pol_sample_lists = self._take_policy_samples()
+                    pol_sample_lists = self._take_policy_samples(itr)
                     self._log_data(itr, traj_sample_lists, pol_sample_lists)
+                    iteration_end = time.time()
+                    timestamps["iteration_times"].append(iteration_end-iteration_start)
+                    print(f'Iteration time: {iteration_end-iteration_start}')
             else:
                 itr_start = self._initialize(itr_load)
                 for itr in range(itr_start, self._hyperparams['iterations']):
+                    iteration_start = time.time()
                     jobs = self._train_idx
                     filenames = ["temp{k}.pkl" for k,_ in enumerate(jobs)]
                     for f in filenames:
@@ -169,9 +184,11 @@ class GPSMain(object):
                     config['verbose_trials'] = self._hyperparams['verbose_trials']
                     localargs = [(cond,  itr, config, filenames[i]) for i,cond in enumerate(jobs)]
                     # run_local_controller(*localargs[0])
+                    cond_start = time.time()
                     with multiprocessing.Pool(processes = min(6,len(self._train_idx))) as pool:
                         results = pool.starmap(run_local_controller, localargs)
-                    
+                    cond_end = time.time()
+                    timestamps["local_controller_times"].append(cond_end-cond_start)
                     # traj_sample_lists = [
                     #     agent.get_samples(0, -self._hyperparams['num_samples'])
                     #     for agent in results
@@ -183,8 +200,13 @@ class GPSMain(object):
                     # Clear agent samples.
                     self.agent.clear_samples()
                     self._take_iteration(itr, traj_sample_lists)
-                    pol_sample_lists = self._take_policy_samples()
+                    pol_sample_lists = self._take_policy_samples(itr)
                     self._log_data(itr, traj_sample_lists, pol_sample_lists)
+                    iteration_end = time.time()
+                    timestamps["iteration_times"].append(iteration_end-iteration_start)
+            timestamps["end"] = time.time()
+            with open(os.path.join(self._hyperparams['common']['data_files_dir'],'timestamps.json'), 'w') as outfile:
+                json.dump(timestamps, outfile)
             '''
             itr_start = self._initialize(itr_load)
 
@@ -227,7 +249,7 @@ class GPSMain(object):
                 pol_sample_lists = self._take_policy_samples()
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
                 '''
-
+        
         except Exception as e:
             traceback.print_exception(*sys.exc_info())
         finally:
@@ -251,7 +273,7 @@ class GPSMain(object):
         traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
             ('traj_sample_itr_%02d.pkl' % itr))
 
-        pol_sample_lists = self._take_policy_samples(N)
+        pol_sample_lists = self._take_policy_samples(itr, N)
         self.data_logger.pickle(
             self._data_files_dir + ('pol_sample_itr_%02d.pkl' % itr),
             copy.copy(pol_sample_lists)
@@ -365,7 +387,7 @@ class GPSMain(object):
         if self.gui:
             self.gui.stop_display_calculating()
 
-    def _take_policy_samples(self, N=None):
+    def _take_policy_samples(self, itr, N=None):
         """
         Take samples from the policy to see how it's doing.
         Args:
@@ -384,7 +406,7 @@ class GPSMain(object):
         # TODO: Take at all conditions for GUI?
         for cond in range(len(self._test_idx)):
             pol_samples[cond][0] = self.agent.sample(
-                self.algorithm.policy_opt.policy, self._test_idx[cond],
+                self.algorithm.policy_opt.policy, self._test_idx[cond], itr,
                 verbose=verbose, save=False, noisy=False)
         return [SampleList(samples) for samples in pol_samples]
 
@@ -440,8 +462,8 @@ def main():
                         help='run target setup')
     parser.add_argument('-r', '--resume', metavar='N', type=int,
                         help='resume training from iter N')
-    parser.add_argument('-p', '--policy', metavar='N', type=int,
-                        help='take N policy samples (for BADMM/MDGPS only)')
+    parser.add_argument('-p', '--policy', nargs = '+', metavar=('N', 'itr'), type=int,
+                        help='take N policy samples from iteration itr (for BADMM/MDGPS only)')
     parser.add_argument('-s', '--silent', action='store_true',
                         help='silent debug print outs')
     parser.add_argument('-q', '--quit', action='store_true',
@@ -452,7 +474,11 @@ def main():
 
     exp_name = args.experiment
     resume_training_itr = args.resume
-    test_policy_N = args.policy
+    if args.policy is None:
+        test_policy_N = None
+    else:
+        test_policy_N = args.policy[0]
+        test_policy_itr = args.policy[1]
 
     from gps import __file__ as gps_filepath
     gps_filepath = os.path.abspath(gps_filepath)
@@ -529,8 +555,8 @@ def main():
         algorithm_prefix = 'algorithm_itr_'
         algorithm_filenames = [f for f in data_filenames if f.startswith(algorithm_prefix)]
         current_algorithm = sorted(algorithm_filenames, reverse=True)[0]
-        current_itr = int(current_algorithm[len(algorithm_prefix):len(algorithm_prefix)+2])
-
+        # current_itr = int(current_algorithm[len(algorithm_prefix):len(algorithm_prefix)+2])
+        current_itr = test_policy_itr
         gps = GPSMain(hyperparams.config)
         if hyperparams.config['gui_on']:
             test_policy = threading.Thread(

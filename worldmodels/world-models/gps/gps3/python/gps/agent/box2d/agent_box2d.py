@@ -85,7 +85,7 @@ class AgentBox2D(Agent):
         sample = Sample(self)
         self._set_sample(sample, b2d_X, -1)
         return sample
-
+    
     def _set_sample(self, sample, b2d_X, t):
         for sensor in b2d_X.keys():
             sample.set(sensor, np.array(b2d_X[sensor]), t=t+1)
