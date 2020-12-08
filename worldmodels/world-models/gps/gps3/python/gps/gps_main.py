@@ -185,7 +185,7 @@ class GPSMain(object):
                     localargs = [(cond,  itr, config, filenames[i]) for i,cond in enumerate(jobs)]
                     # run_local_controller(*localargs[0])
                     cond_start = time.time()
-                    with multiprocessing.Pool(processes = min(6,len(self._train_idx))) as pool:
+                    with multiprocessing.Pool(processes = min(2,len(self._train_idx))) as pool:
                         results = pool.starmap(run_local_controller, localargs)
                     cond_end = time.time()
                     timestamps["local_controller_times"].append(cond_end-cond_start)
