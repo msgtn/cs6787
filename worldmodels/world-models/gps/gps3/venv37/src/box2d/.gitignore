@@ -1,9 +1,0 @@
-*datasets
-*training_logs
-*.png
-*.npy
-*.npz
-*.pyc
-*.txt
-*.pkl
-monitor-folder
