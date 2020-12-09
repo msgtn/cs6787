@@ -9,6 +9,7 @@ import gps
 
 
 dir_exp = '/home/dev/scratch/gpscars/worldmodels/world-models/gps/gps3/experiments/car_world_badmm_experiment2/data_files/pol_sample_itr_*.pkl'
+dir_exp = '/home/dev/scratch/gpscars/worldmodels/world-models/gps/gps3/experiments/car_world_badmm_experiment_parallel_10/data_files/pol_sample_itr_*.pkl'
 policy_pkl_paths = glob.glob(dir_exp)
 policy_pkl_paths.sort()
 num_iterations = int(policy_pkl_paths[-1].split('_')[-1][:-4])+1
