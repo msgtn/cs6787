@@ -156,4 +156,3 @@ class TfSolver:
             else:
                 loss = sess.run([self.loss_scalar, self.solver_op], feed_dict)
             return loss[0]
-

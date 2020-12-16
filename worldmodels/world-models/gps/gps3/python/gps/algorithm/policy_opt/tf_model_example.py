@@ -42,7 +42,7 @@ def get_input_layer(dim_input, dim_output):
     return net_input, action, precision
 
 
-def get_mlp_layers(mlp_input, number_layers, dimension_hidden):
+def get_mlp_layers(mlp_input, number_layers, dimension_hidden, batch_norm = False):
     """compute MLP with specified number of layers.
         math: sigma(Wx + b)
         for each layer, where sigma is by default relu"""
@@ -50,15 +50,39 @@ def get_mlp_layers(mlp_input, number_layers, dimension_hidden):
     weights = []
     biases = []
     for layer_step in range(0, number_layers):
-        in_shape = cur_top.get_shape().dims[1].value
-        cur_weight = init_weights([in_shape, dimension_hidden[layer_step]], name='w_' + str(layer_step))
-        cur_bias = init_bias([dimension_hidden[layer_step]], name='b_' + str(layer_step))
-        weights.append(cur_weight)
-        biases.append(cur_bias)
-        if layer_step != number_layers-1:  # final layer has no RELU
-            cur_top = tf.nn.relu(tf.matmul(cur_top, cur_weight) + cur_bias)
+        if batch_norm:
+            in_shape = cur_top.get_shape().dims[1].value
+            cur_weight = init_weights([in_shape, dimension_hidden[layer_step]], name='w_' + str(layer_step))
+            cur_bias = init_bias([dimension_hidden[layer_step]], name='b_' + str(layer_step))
+            weights.append(cur_weight)
+            biases.append(cur_bias)
+
+            ### Batch normalization code
+            ## no batch norm for first layer
+            if layer_step != 0:
+                epsilon = 1e-3 ## Small epsilon value for the BN transform
+                scale = tf.Variable(tf.ones([in_shape]))
+                offset = tf.Variable(tf.zeros([in_shape]))
+                batch_mean2, batch_var2 = tf.nn.moments(cur_top,[0])
+                BN2 = tf.nn.batch_normalization(cur_top,batch_mean2,batch_var2,offset,scale,epsilon)
+                z2_BN = tf.matmul(BN2,cur_weight) + cur_bias
+            else:
+                z2_BN =  tf.matmul(cur_top,cur_weight) + cur_bias
+            if layer_step != number_layers-1:  # final layer has no RELU
+                cur_top = tf.nn.relu(z2_BN)
+            else:
+                cur_top = z2_BN
+
         else:
-            cur_top = tf.matmul(cur_top, cur_weight) + cur_bias
+            in_shape = cur_top.get_shape().dims[1].value
+            cur_weight = init_weights([in_shape, dimension_hidden[layer_step]], name='w_' + str(layer_step))
+            cur_bias = init_bias([dimension_hidden[layer_step]], name='b_' + str(layer_step))
+            weights.append(cur_weight)
+            biases.append(cur_bias)
+            if layer_step != number_layers-1:  # final layer has no RELU
+                cur_top = tf.nn.relu(tf.matmul(cur_top, cur_weight) + cur_bias)
+            else:
+                cur_top = tf.matmul(cur_top, cur_weight) + cur_bias
 
     return cur_top, weights, biases
 
@@ -85,7 +109,7 @@ def tf_network(dim_input=27, dim_output=7, batch_size=25, network_config=None):
     dim_hidden.append(dim_output)
 
     nn_input, action, precision = get_input_layer(dim_input, dim_output)
-    mlp_applied, weights_FC, biases_FC = get_mlp_layers(nn_input, n_layers, dim_hidden)
+    mlp_applied, weights_FC, biases_FC = get_mlp_layers(nn_input, n_layers, dim_hidden, network_config['batch_norm'])
     fc_vars = weights_FC + biases_FC
     loss_out = get_loss_layer(mlp_out=mlp_applied, action=action, precision=precision, batch_size=batch_size)
 
@@ -265,7 +289,6 @@ def multi_modal_network_fp(dim_input=27, dim_output=7, batch_size=25, network_co
     loss = euclidean_loss_layer(a=action, b=fc_output, precision=precision, batch_size=batch_size)
     nnet = TfMap.init_from_lists([nn_input, action, precision], [fc_output], [loss], fp=fp)
     last_conv_vars = fc_input
-
     return nnet, fc_vars, last_conv_vars
 
 
@@ -285,5 +308,3 @@ def get_xavier_weights(filter_shape, poolsize=(2, 2)):
     low = -4*np.sqrt(6.0/(fan_in + fan_out)) # use 4 for sigmoid, 1 for tanh activation
     high = 4*np.sqrt(6.0/(fan_in + fan_out))
     return tf.Variable(tf.random_uniform(filter_shape, minval=low, maxval=high, dtype=tf.float32))
-
-

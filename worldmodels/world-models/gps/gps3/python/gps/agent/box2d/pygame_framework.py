@@ -24,7 +24,7 @@ This file contains the Framework for the Box2D GUI
 
 import Box2D as b2
 import pygame
-import framework
+from . import framework
 
 
 GUIEnabled = False
