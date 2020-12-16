@@ -25,7 +25,7 @@ from gps.algorithm.policy.policy_prior_gmm import PolicyPriorGMM
 from gps.algorithm.policy_opt.policy_opt_tf import PolicyOptTf
 from gps.algorithm.policy_opt.tf_model_example import tf_network
 from gps.algorithm.algorithm_badmm import AlgorithmBADMM
-
+from PIL import Image
 
 import sys
 sys.path.append('../../WorldModelsExperiments/carracing')
@@ -37,7 +37,13 @@ from skimage import color
 
 
 def dream_resize(_,obs):
-    return model.encode_obs(resize(obs,(64,64,3)))[0]
+    def process_frame(frame, screen_size=(64, 64), vertical_cut=84, max_val=255, save_img=False):
+        """ crops, scales & convert to float """
+        frame = frame[:vertical_cut, :, :]
+        frame = Image.fromarray(frame, mode='RGB')
+        obs = frame.resize(screen_size, Image.BILINEAR)
+        return np.array(obs) / max_val
+    return model.encode_obs(process_frame(obs))[0]
 CarWorld.resize = dream_resize
 
 IMAGE_WIDTH = 8
@@ -60,7 +66,7 @@ common = {
     'experiment_name': 'car_world_dream_experiment' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
-    'data_files_dir': EXP_DIR + 'data_files/',
+    'data_files_dir': EXP_DIR + 'data_files_/',
     'log_filename': EXP_DIR + 'log.txt',
     'conditions': 10,
 }
@@ -78,8 +84,8 @@ agent = {
     'dt': 0.01,
     'substeps': 1,
     'conditions': common['conditions'],
-    # 'T': 500,
-    'T': 1000,
+    'T': 500,
+    # 'T': 1000,
     'sensor_dims': SENSOR_DIMS,
     'state_include': [RGB_IMAGE],
     'obs_include': [RGB_IMAGE],
