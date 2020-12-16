@@ -7,3 +7,8 @@ Dockerfile
 frames/
 dock_config.json
 .mypy_cache
+<<<<<<< HEAD
+*venv*
+=======
+*venv*
+>>>>>>> ac0ec52880c6a4ef8c0e95c629c400f2f9363967
