@@ -148,6 +148,7 @@ algorithm['policy_opt'] = {
     'network_params': {
         'obs_include': [RGB_IMAGE],
         'sensor_dims': SENSOR_DIMS,
+        'batch_norm': False
     },
     'network_model': tf_network
 }
