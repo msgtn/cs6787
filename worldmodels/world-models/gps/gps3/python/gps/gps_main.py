@@ -185,7 +185,9 @@ class GPSMain(object):
                     localargs = [(cond,  itr, config, filenames[i]) for i,cond in enumerate(jobs)]
                     # run_local_controller(*localargs[0])
                     cond_start = time.time()
-                    with multiprocessing.Pool(processes = min(6,len(self._train_idx))) as pool:
+                    #set the number of workers, up to the number of conditions
+                    print(f"Running local rollouts with {parallel} workers!")
+                    with multiprocessing.Pool(processes = min(parallel,len(self._train_idx))) as pool:
                         results = pool.starmap(run_local_controller, localargs)
                     cond_end = time.time()
                     timestamps["local_controller_times"].append(cond_end-cond_start)
@@ -468,7 +470,7 @@ def main():
                         help='silent debug print outs')
     parser.add_argument('-q', '--quit', action='store_true',
                         help='quit GUI automatically when finished')
-    parser.add_argument('-c', '--concurrent', action='store_true',
+    parser.add_argument('-c', '--concurrent', type=int,
                         help='run conditions concurrently')
     args = parser.parse_args()
 
@@ -491,7 +493,7 @@ def main():
     else:
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     if args.concurrent:
-        concurrent = True
+        concurrent = args.concurrent
     else:
         concurrent = False
     if args.new:
