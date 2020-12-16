@@ -1,7 +1,7 @@
 # To get started, copy over hyperparams from another experiment.
 # Visit rll.berkeley.edu/gps/hyperparams.html for documentation.
 
-""" Hyperparameters for Box2d Car Racing."""
+""" Hyperparameters for Box2d Car Racing BADMM."""
 from __future__ import division
 
 import os.path
@@ -68,7 +68,7 @@ common = {
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files_/',
     'log_filename': EXP_DIR + 'log.txt',
-    'conditions': 1,
+    'conditions': 10,
 }
 
 if not os.path.exists(common['data_files_dir']):
@@ -87,12 +87,22 @@ agent = {
     'T': 500,
     'sensor_dims': SENSOR_DIMS,
     'state_include': [RGB_IMAGE],
-    'obs_include': [],
+    'obs_include': [RGB_IMAGE],
 }
 
 algorithm = {
-    'type': AlgorithmTrajOpt,
+    'type': AlgorithmBADMM,
     'conditions': common['conditions'],
+    'iterations': 10,
+    'lg_step_schedule': np.array([1e-4, 1e-3, 1e-2, 1e-2]),
+    'policy_dual_rate': 0.2,
+    'ent_reg_schedule': np.array([1e-3, 1e-3, 1e-2, 1e-1]),
+    'fixed_lg_step': 3,
+    'kl_step': 5.0,
+    'min_step_mult': 0.01,
+    'max_step_mult': 1.0,
+    'sample_decrease_var': 0.05,
+    'sample_increase_var': 0.1,
 }
 
 algorithm['init_traj_distr'] = {
@@ -132,12 +142,41 @@ algorithm['traj_opt'] = {
     'type': TrajOptLQRPython,
 }
 
-algorithm['policy_opt'] = {}
+algorithm['policy_opt'] = {
+    'type': PolicyOptTf,
+    'weights_file_prefix': EXP_DIR + 'policy',
+    'network_params': {
+        'obs_include': [RGB_IMAGE],
+        'sensor_dims': SENSOR_DIMS,
+    },
+    'network_model': tf_network
+}
+
+
+
+    # algorithm['policy_opt'] = {
+    #     'type': PolicyOptTf,
+    #     'network_params': {
+    #         'obs_include': [JOINT_ANGLES, JOINT_VELOCITIES, END_EFFECTOR_POINTS, END_EFFECTOR_POINT_VELOCITIES],
+    #         'sensor_dims': SENSOR_DIMS,
+    #     },
+    #     'weights_file_prefix': EXP_DIR + 'policy',
+    #     'iterations': 3000,
+    #     'network_model': tf_network
+    # }
+
+algorithm['policy_prior'] = {
+    'type': PolicyPriorGMM,
+    'max_clusters': 20,
+    'min_samples_per_cluster': 40,
+    'max_samples': 20,
+}
 
 config = {
-    'iterations': 10,
+    'iterations': 20,
     'num_samples': 5,
     'verbose_trials': 5,
+    'verbose_policy_trials': 5,
     'common': common,
     'agent': agent,
     'gui_on': False,

@@ -57,7 +57,10 @@ plt.savefig('/Users/PsychoMugs/projects/gpscar/worldmodels/world-models/gps/gps3
 plt.show()
 # import pdb; pdb.set_trace()
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> ac0ec52880c6a4ef8c0e95c629c400f2f9363967
 
 >>>>>>> ac0ec52... Implementing Green's VAE
 
