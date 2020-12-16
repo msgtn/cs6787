@@ -185,13 +185,9 @@ class GPSMain(object):
                     localargs = [(cond,  itr, config, filenames[i]) for i,cond in enumerate(jobs)]
                     # run_local_controller(*localargs[0])
                     cond_start = time.time()
-<<<<<<< HEAD
                     #set the number of workers, up to the number of conditions
                     print(f"Running local rollouts with {parallel} workers!")
                     with multiprocessing.Pool(processes = min(parallel,len(self._train_idx))) as pool:
-=======
-                    with multiprocessing.Pool(processes = min(2,len(self._train_idx))) as pool:
->>>>>>> ac0ec52880c6a4ef8c0e95c629c400f2f9363967
                         results = pool.starmap(run_local_controller, localargs)
                     cond_end = time.time()
                     timestamps["local_controller_times"].append(cond_end-cond_start)
