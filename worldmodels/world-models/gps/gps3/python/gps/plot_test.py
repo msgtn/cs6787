@@ -56,4 +56,8 @@ plt.xticks(list(range(max_len+1)))
 plt.savefig('/Users/PsychoMugs/projects/gpscar/worldmodels/world-models/gps/gps3/experiments/car_world_dream_experiment/data_files_02/vae_plot.jpg')
 plt.show()
 # import pdb; pdb.set_trace()
+<<<<<<< HEAD
+=======
+
+>>>>>>> ac0ec52... Implementing Green's VAE
 
